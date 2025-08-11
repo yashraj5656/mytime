@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Schedule</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>📅 My Day Schedule</h1>
+        
+        <!-- Live Clock -->
+        <div id="clock" class="clock"></div>
+
+        <div class="task-form">
+            <input type="text" id="taskName" placeholder="Enter task name">
+            <input type="time" id="taskTime">
+            <button onclick="addTask()">Add Task</button>
+        </div>
+        <ul id="taskList"></ul>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
