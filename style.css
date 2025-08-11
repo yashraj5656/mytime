@@ -1,68 +1,51 @@
 body {
-    font-family: 'Times New Roman', Times, serif;
-    background: #f4f0e6 url('https://www.transparenttextures.com/patterns/old-paper.png');
+    font-family: 'Times New Roman', serif;
+    background-color: #f5f0e1;
+    color: #333;
     margin: 0;
     padding: 0;
-    color: #2b2b2b;
 }
 
 .container {
-    max-width: 700px;
-    margin: 50px auto;
-    background: rgba(253, 250, 243, 0.95) url('https://www.transparenttextures.com/patterns/aged-paper.png');
-    padding: 20px;
+    max-width: 500px;
+    margin: auto;
+    padding: 15px;
     border: 2px solid #000;
-    border-radius: 3px;
-    box-shadow: 0 0 25px rgba(0,0,0,0.25);
+    background: #fffdf5;
+    box-shadow: 3px 3px 0px #999;
+}
+
+header {
+    text-align: center;
+    border-bottom: 2px dashed #000;
+    padding-bottom: 10px;
 }
 
 h1 {
-    text-align: center;
-    font-size: 2.2rem;
-    font-weight: bold;
-    border-bottom: 3px double #000;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
-    letter-spacing: 1px;
+    font-size: 1.8rem;
+    margin: 0;
 }
 
 .clock {
-    font-size: 1.4rem;
-    text-align: center;
-    margin-bottom: 20px;
-    font-style: italic;
-    color: #3d3d3d;
-}
-
-.task-form {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-input, button {
-    padding: 10px;
-    font-size: 16px;
-    border: 1px solid #000;
-    background: rgba(253, 250, 243, 0.9);
-    font-family: 'Times New Roman', Times, serif;
-}
-
-input[type="text"], input[type="time"] {
-    flex: 1;
+    font-size: 1.3rem;
+    font-weight: bold;
+    margin: 10px 0;
 }
 
 button {
-    background: #d4c29a;
-    cursor: pointer;
+    background-color: #f2e2ba;
     border: 1px solid #000;
+    padding: 5px 10px;
+    cursor: pointer;
     font-weight: bold;
-    transition: background 0.2s;
 }
 
 button:hover {
-    background: #c0aa82;
+    background-color: #e6d097;
+}
+
+section {
+    margin-top: 15px;
 }
 
 ul {
@@ -71,26 +54,29 @@ ul {
 }
 
 li {
-    background: rgba(249, 245, 233, 0.95);
-    margin: 5px 0;
-    padding: 10px;
+    background: #fff7e1;
     border: 1px solid #000;
-    border-left: 5px solid #b59b6e;
+    margin-bottom: 5px;
+    padding: 10px;
     display: flex;
     justify-content: space-between;
-    font-size: 1rem;
-    font-family: 'Times New Roman', Times, serif;
+    align-items: center;
 }
 
-li button {
-    background: #b59b6e;
+.remove-btn {
+    background: red;
+    color: white;
     border: none;
-    padding: 5px 10px;
+    padding: 3px 8px;
     cursor: pointer;
-    color: #fff;
-    font-weight: bold;
 }
 
-li button:hover {
-    background: #8e7a55;
+.remove-btn:hover {
+    background: darkred;
+}
+
+input, select {
+    width: 100%;
+    padding: 5px;
+    margin: 5px 0;
 }

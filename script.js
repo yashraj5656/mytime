@@ -1,76 +1,98 @@
-let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
-const taskList = document.getElementById("taskList");
-const clockElement = document.getElementById("clock");
+let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
 
-// Request notification permission
-if ("Notification" in window) {
-    Notification.requestPermission();
+// Update clock
+function updateClock() {
+    const now = new Date();
+    document.getElementById('currentTime').textContent = now.toLocaleTimeString();
 }
+setInterval(updateClock, 1000);
+updateClock();
 
-// Function to render tasks
+// Render today's tasks
 function renderTasks() {
+    const taskList = document.getElementById('taskList');
     taskList.innerHTML = "";
+    const today = new Date().toISOString().split("T")[0];
+
     tasks.forEach((task, index) => {
-        const li = document.createElement("li");
-        li.innerHTML = `${task.name} - ${task.time} 
-            <button onclick="deleteTask(${index})">❌</button>`;
-        taskList.appendChild(li);
+        if (task.date.startsWith(today)) {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>${task.name} - ${task.time} (${task.category || 'No category'})</span>
+                <button class="remove-btn" onclick="removeTask(${index})">X</button>
+            `;
+            taskList.appendChild(li);
+        }
     });
+
+    updateCategoryFilter();
 }
 
-// Add task
-function addTask() {
-    const name = document.getElementById("taskName").value.trim();
-    const time = document.getElementById("taskTime").value;
-
-    if (name && time) {
-        tasks.push({ name, time, alerted: false });
-        localStorage.setItem("tasks", JSON.stringify(tasks));
-        renderTasks();
-        document.getElementById("taskName").value = "";
-        document.getElementById("taskTime").value = "";
-    } else {
-        alert("Please enter both task name and time.");
-    }
-}
-
-// Delete task
-function deleteTask(index) {
+// Remove task
+function removeTask(index) {
     tasks.splice(index, 1);
-    localStorage.setItem("tasks", JSON.stringify(tasks));
+    localStorage.setItem('tasks', JSON.stringify(tasks));
     renderTasks();
 }
 
-// Check if task time matches current time
-function checkTasks() {
-    const now = new Date();
-    const currentTime = now.toTimeString().slice(0, 5);
+// Add new task
+document.getElementById('taskForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const name = document.getElementById('taskInput').value;
+    const datetime = document.getElementById('taskTime').value;
+    const category = document.getElementById('taskCategory').value;
+    const recurring = document.getElementById('recurringTask').checked;
+    const message = document.getElementById('customMessage').value || `Reminder: ${name}`;
 
-    tasks.forEach(task => {
-        if (task.time === currentTime && !task.alerted) {
-            task.alerted = true;
-            localStorage.setItem("tasks", JSON.stringify(tasks));
+    if (!name || !datetime) return;
 
-            if ("Notification" in window && Notification.permission === "granted") {
-                new Notification("Task Reminder", {
-                    body: task.name,
-                    icon: "https://cdn-icons-png.flaticon.com/512/565/565547.png"
-                });
-            } else {
-                alert(`⏰ Reminder: ${task.name}`);
-            }
-        }
+    tasks.push({
+        name,
+        date: datetime,
+        time: new Date(datetime).toLocaleTimeString(),
+        category,
+        recurring,
+        message
+    });
+
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    renderTasks();
+    this.reset();
+});
+
+// Search and filter
+document.getElementById('searchInput').addEventListener('input', function() {
+    const searchVal = this.value.toLowerCase();
+    const taskList = document.getElementById('taskList');
+    Array.from(taskList.children).forEach(li => {
+        const text = li.textContent.toLowerCase();
+        li.style.display = text.includes(searchVal) ? "" : "none";
+    });
+});
+
+document.getElementById('categoryFilter').addEventListener('change', function() {
+    const category = this.value;
+    const taskList = document.getElementById('taskList');
+    Array.from(taskList.children).forEach(li => {
+        li.style.display = li.textContent.includes(category) || category === "" ? "" : "none";
+    });
+});
+
+// Update category filter
+function updateCategoryFilter() {
+    const categorySet = new Set(tasks.map(t => t.category).filter(Boolean));
+    const categoryFilter = document.getElementById('categoryFilter');
+    categoryFilter.innerHTML = `<option value="">All Categories</option>`;
+    categorySet.forEach(cat => {
+        categoryFilter.innerHTML += `<option value="${cat}">${cat}</option>`;
     });
 }
 
-// Update clock every second
-function updateClock() {
-    const now = new Date();
-    clockElement.textContent = now.toLocaleTimeString();
-}
-
-setInterval(updateClock, 1000); // update clock every second
-setInterval(checkTasks, 1000 * 60); // check every minute
+// Toggle features
+document.getElementById('toggleFeatures').addEventListener('click', function() {
+    const adv = document.getElementById('advancedFeatures');
+    adv.style.display = adv.style.display === "none" ? "block" : "none";
+    this.textContent = adv.style.display === "none" ? "Show Advanced Features" : "Hide Advanced Features";
+});
 
 renderTasks();
-updateClock(); // initial clock display
