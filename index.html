@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no">
 <title>Sci-Fi Day Scheduler</title>
 <link rel="stylesheet" href="style.css">
 <style>
@@ -26,8 +26,8 @@ body {
 
 .container {
   text-align: center;
-  max-width: 700px;
   width: 600px;
+  max-width: 600px;
 }
 
 h1 {
@@ -45,6 +45,12 @@ h1 {
   margin-bottom: 20px;
   box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
   backdrop-filter: blur(10px);
+}
+
+.task-panel {
+  max-height: 300px; /* Limit height to make scrolling necessary for long lists */
+  overflow-y: auto; /* Enable vertical scrolling for task list */
+  -webkit-overflow-scrolling: touch; /* Smooth scrolling on touch devices */
 }
 
 .digital {
@@ -226,8 +232,8 @@ const defaultTasks = [
     { name: "Content for Smart Owl", time: "15:00", endTime: "16:00", done: false },
     { name: "Content for Nihonify", time: "16:00", endTime: "17:00", done: false },
     { name: "Content for DevPath", time: "17:00", endTime: "18:00", done: false },
-    { name: "Develop Software Products", time: "18:00", endTime: "18:30", done: false },
-    { name: "Fun Time", time: "18:30", endTime: "20:30", done: false },
+    { name: "Dinner Break", time: "18:00", endTime: "18:30", done: false },
+    { name: "Developing Software Products", time: "18:30", endTime: "20:30", done: false },
     { name: "Review and Plan", time: "20:30", endTime: "21:00", done: false },
     { name: "Wind Down", time: "21:00", endTime: "22:00", done: false },
     { name: "Bedtime", time: "22:00", endTime: "23:59", done: false }
