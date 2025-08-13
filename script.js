@@ -1,3 +1,11 @@
+if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission().then(permission => {
+        if (permission !== "granted") {
+            console.warn("Notifications disabled by user.");
+        }
+    });
+}
+
 const taskForm = document.getElementById("taskForm");
 const taskList = document.getElementById("taskList");
 const popup = document.getElementById("popup");
@@ -129,3 +137,22 @@ setInterval(updateClockAndAge, 1000);
 // Initial load
 displayTasks();
 updateClockAndAge();
+
+function showPopup(message) {
+    // On-screen popup
+    popup.innerText = message;
+    popup.style.display = "block";
+    alertSound.play();
+    setTimeout(() => {
+        popup.style.display = "none";
+    }, 5000);
+
+    // Push notification
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("🛸 Task Reminder", {
+            body: message,
+            icon: "https://cdn-icons-png.flaticon.com/512/616/616408.png" // You can change this
+        });
+    }
+}
+
