@@ -5,11 +5,166 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sci-Fi Day Scheduler</title>
 <link rel="stylesheet" href="style.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Orbitron', sans-serif;
+  background: radial-gradient(circle at top, #0f2027, #203a43, #2c5364);
+  color: #fff;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.container {
+  text-align: center;
+  max-width: 700px;
+  width: 600px;
+}
+
+h1 {
+  margin-bottom: 10px;
+  font-size: 2rem;
+  color: #00e5ff;
+  text-shadow: 0 0 10px #00e5ff, 0 0 20px #00bcd4;
+}
+
+.panel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(0, 229, 255, 0.3);
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.digital {
+  font-size: 1.4rem;
+  color: #0ff;
+  text-shadow: 0 0 10px #0ff, 0 0 20px #00f6ff;
+}
+
+#currentTime {
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+input, button {
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+input {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+button {
+  background: linear-gradient(90deg, #00e5ff, #00bcd4);
+  color: #000;
+  cursor: pointer;
+  font-weight: bold;
+  transition: transform 0.2s;
+}
+
+button:hover {
+  transform: scale(1.05);
+}
+
+.task-panel div {
+  background: rgba(0, 255, 255, 0.1);
+  margin: 8px 0;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #fff;
+  box-shadow: 0 0 8px rgba(0, 229, 255, 0.3);
+}
+
+.task-panel div:hover {
+  background: rgba(0, 255, 255, 0.2);
+}
+
+.delete-btn {
+  background: #ff1744;
+  border: none;
+  padding: 5px 8px;
+  border-radius: 5px;
+  color: #fff;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background: #ff4569;
+}
+
+#popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 229, 255, 0.9);
+    padding: 20px 30px;
+    border-radius: 12px;
+    color: #000;
+    font-weight: bold;
+    font-size: 1.2rem;
+    text-align: center;
+    box-shadow: 0 0 20px rgba(0, 229, 255, 0.7);
+    display: none;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+#popup.show {
+    display: block;
+    opacity: 1;
+}
+
+.done-btn {
+    background: #4caf50;
+    border: none;
+    padding: 5px 8px;
+    border-radius: 5px;
+    color: white;
+    cursor: pointer;
+}
+.done-btn:hover {
+    background: #66bb6a;
+}
+</style>
 </head>
 <body>
 
 <div class="container">
   <h1>🛸 Purposeful Task Harmony</h1>
+  <div id="successRateDisplay" class="digital" style="margin-bottom: 20px;"></div>
 
   <div class="panel time-panel">
     <div id="currentTime" class="digital"></div>
@@ -35,6 +190,234 @@
   <source src="https://www.soundjay.com/button/beep-09.wav" type="audio/wav">
 </audio>
 
-<script src="script.js"></script>
+<script>
+if ("Notification" in window && Notification.permission !== "granted") {
+    Notification.requestPermission().then(permission => {
+        if (permission !== "granted") {
+            console.warn("Notifications disabled by user.");
+        }
+    });
+}
+
+const taskForm = document.getElementById("taskForm");
+const taskList = document.getElementById("taskList");
+const popup = document.getElementById("popup");
+const alertSound = document.getElementById("alertSound");
+const currentTimeDisplay = document.getElementById("currentTime");
+const daysOdometer = document.getElementById("daysOdometer");
+const ageDisplay = document.getElementById("ageDisplay");
+const successRateDisplay = document.getElementById("successRateDisplay");
+
+// Success rate system
+let completedTasks = parseInt(localStorage.getItem("completedTasks")) || 0;
+let totalTasks = parseInt(localStorage.getItem("totalTasks")) || 0;
+let lastResetDate = localStorage.getItem("lastResetDate") || new Date().toDateString();
+
+// ----- Default Daily Tasks -----
+const defaultTasks = [
+    { name: "Morning Routine", time: "06:30", endTime: "07:00", done: false },
+    { name: "Learning IT", time: "07:00", endTime: "08:30", done: false },
+    { name: "Break", time: "08:30", endTime: "09:00", done: false },
+    { name: "Learning Finance", time: "09:00", endTime: "10:30", done: false },
+    { name: "Learning Marketing", time: "10:30", endTime: "12:00", done: false },
+    { name: "Lunch Break", time: "12:00", endTime: "13:00", done: false },
+    { name: "Product Advertising Video for Stayoung", time: "13:00", endTime: "14:30", done: false },
+    { name: "Break", time: "14:30", endTime: "15:00", done: false },
+    { name: "Content for Smart Owl", time: "15:00", endTime: "16:00", done: false },
+    { name: "Content for Nihonify", time: "16:00", endTime: "17:00", done: false },
+    { name: "Content for DevPath", time: "17:00", endTime: "18:00", done: false },
+    { name: "Develop Software Products", time: "18:00", endTime: "18:30", done: false },
+    { name: "Fun Time", time: "18:30", endTime: "20:30", done: false },
+    { name: "Review and Plan", time: "20:30", endTime: "21:00", done: false },
+    { name: "Wind Down", time: "21:00", endTime: "22:00", done: false },
+    { name: "Bedtime", time: "22:00", endTime: "23:59", done: false }
+];
+
+let savedTasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let tasks = mergeTasks(defaultTasks, savedTasks);
+
+// Initialize totalTasks based on the number of tasks
+totalTasks = tasks.length;
+localStorage.setItem("totalTasks", totalTasks);
+updateSuccessRateDisplay();
+
+function mergeTasks(defaults, custom) {
+    const combined = [...defaults];
+    custom.forEach(ct => {
+        if (!combined.some(dt => dt.name === ct.name && dt.time === ct.time)) {
+            combined.push({ ...ct, done: false });
+        }
+    });
+    return combined;
+}
+
+let lastDays = 0;
+
+function saveTasks() {
+    const customOnly = tasks.filter(t => !defaultTasks.some(dt => dt.name === t.name && dt.time === t.time));
+    localStorage.setItem("tasks", JSON.stringify(customOnly));
+}
+
+function checkAndResetSuccessRate() {
+    const currentDate = new Date().toDateString();
+    if (currentDate !== lastResetDate) {
+        completedTasks = 0;
+        totalTasks = tasks.length;
+        tasks.forEach(task => task.done = false);
+        lastResetDate = currentDate;
+        localStorage.setItem("completedTasks", completedTasks);
+        localStorage.setItem("totalTasks", totalTasks);
+        localStorage.setItem("lastResetDate", lastResetDate);
+        updateSuccessRateDisplay();
+    }
+}
+
+function displayTasks() {
+    taskList.innerHTML = "";
+    const now = new Date();
+    const currentHHMM = now.toTimeString().slice(0, 5);
+
+    tasks.forEach((task, index) => {
+        const div = document.createElement("div");
+        div.className = "task";
+
+        let btnHTML = "";
+        if (isCurrentTask(task, currentHHMM) && !task.done) {
+            btnHTML = `<button class="done-btn" onclick="markDone(${index})">Done ✅</button>`;
+        } else {
+            btnHTML = `<button class="remove-btn" onclick="removeTask(${index})">X</button>`;
+        }
+
+        div.innerHTML = `<span>⏰ ${task.time} - ${task.name}</span>${btnHTML}`;
+        taskList.appendChild(div);
+    });
+}
+
+function isCurrentTask(task, currentHHMM) {
+    return task.endTime && currentHHMM >= task.time && currentHHMM < task.endTime;
+}
+
+function removeTask(index) {
+    tasks.splice(index, 1);
+    totalTasks--;
+    localStorage.setItem("totalTasks", totalTasks);
+    saveTasks();
+    updateSuccessRateDisplay();
+    displayTasks();
+}
+
+taskForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const name = document.getElementById("taskName").value;
+    const time = document.getElementById("taskTime").value;
+    tasks.push({ name, time, endTime: time, done: false });
+    totalTasks++;
+    localStorage.setItem("totalTasks", totalTasks);
+    saveTasks();
+    updateSuccessRateDisplay();
+    displayTasks();
+    taskForm.reset();
+});
+
+function markDone(index) {
+    if (!tasks[index].done) {
+        completedTasks++;
+        tasks[index].done = true;
+        localStorage.setItem("completedTasks", completedTasks);
+        console.log(`Task marked done. completedTasks: ${completedTasks}, totalTasks: ${totalTasks}`);
+        updateSuccessRateDisplay();
+        alert(`Great job! 🎯 Success Rate: ${calculateSuccessRate()}%`);
+        displayTasks();
+    }
+}
+
+function calculateSuccessRate() {
+    const rate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    console.log(`Calculating success rate: ${completedTasks} / ${totalTasks} = ${rate}%`);
+    return rate;
+}
+
+function updateSuccessRateDisplay() {
+    successRateDisplay.innerText = `🎯 Success Rate: ${calculateSuccessRate()}%`;
+}
+
+function showPopup(message) {
+    popup.innerText = message;
+    popup.style.display = "block";
+    alertSound.play();
+    setTimeout(() => {
+        popup.style.display = "none";
+    }, 5000);
+
+    if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("🛸 Task Reminder", {
+            body: message,
+            icon: "https://cdn-icons-png.flaticon.com/512/616/616408.png"
+        });
+    }
+}
+
+function checkTasks() {
+    checkAndResetSuccessRate();
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5);
+    tasks.forEach(task => {
+        if (task.time === currentTime) {
+            showPopup(`🔔 Reminder: ${task.name}`);
+        }
+    });
+    displayTasks();
+}
+
+function updateOdometer(newDays) {
+    const newStr = String(newDays);
+    const oldStr = String(lastDays);
+
+    daysOdometer.innerHTML = "";
+    for (let i = 0; i < newStr.length; i++) {
+        const digit = document.createElement("div");
+        digit.className = "digit";
+        digit.textContent = newStr[i];
+        if (oldStr[i] !== newStr[i]) {
+            digit.classList.add("flip");
+            setTimeout(() => digit.classList.remove("flip"), 300);
+        }
+        daysOdometer.appendChild(digit);
+    }
+    lastDays = newDays;
+}
+
+function updateClockAndAge() {
+    const now = new Date();
+    currentTimeDisplay.textContent = `🕒 ${now.toLocaleTimeString()}`;
+
+    const birthDate = new Date(2005, 3, 5);
+    const diffMs = now - birthDate;
+    const daysLived = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    let years = now.getFullYear() - birthDate.getFullYear();
+    let months = now.getMonth() - birthDate.getMonth();
+    let days = now.getDate() - birthDate.getDate();
+
+    if (days < 0) {
+        months--;
+        const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+        days += prevMonth;
+    }
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+
+    updateOdometer(daysLived);
+    ageDisplay.innerHTML = `<strong>${years} years, ${months} months, ${days} days</strong>`;
+}
+
+setInterval(checkTasks, 1000);
+setInterval(updateClockAndAge, 1000);
+
+displayTasks();
+updateClockAndAge();
+</script>
 </body>
 </html>
