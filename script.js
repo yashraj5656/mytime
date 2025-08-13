@@ -1,98 +1,131 @@
-let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+const taskForm = document.getElementById("taskForm");
+const taskList = document.getElementById("taskList");
+const popup = document.getElementById("popup");
+const alertSound = document.getElementById("alertSound");
+const currentTimeDisplay = document.getElementById("currentTime");
+const daysOdometer = document.getElementById("daysOdometer");
+const ageDisplay = document.getElementById("ageDisplay");
 
-// Update clock
-function updateClock() {
-    const now = new Date();
-    document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let lastDays = 0;
+
+// Save tasks to localStorage
+function saveTasks() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
 }
-setInterval(updateClock, 1000);
-updateClock();
 
-// Render today's tasks
-function renderTasks() {
-    const taskList = document.getElementById('taskList');
+// Display tasks in the list
+function displayTasks() {
     taskList.innerHTML = "";
-    const today = new Date().toISOString().split("T")[0];
-
     tasks.forEach((task, index) => {
-        if (task.date.startsWith(today)) {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <span>${task.name} - ${task.time} (${task.category || 'No category'})</span>
-                <button class="remove-btn" onclick="removeTask(${index})">X</button>
-            `;
-            taskList.appendChild(li);
-        }
+        const div = document.createElement("div");
+        div.className = "task";
+        div.innerHTML = `
+            <span>⏰ ${task.time} - ${task.name}</span>
+            <button class="remove-btn" onclick="removeTask(${index})">X</button>
+        `;
+        taskList.appendChild(div);
     });
-
-    updateCategoryFilter();
 }
 
-// Remove task
+// Remove a task
 function removeTask(index) {
     tasks.splice(index, 1);
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-    renderTasks();
+    saveTasks();
+    displayTasks();
 }
 
 // Add new task
-document.getElementById('taskForm').addEventListener('submit', function(e) {
+taskForm.addEventListener("submit", (e) => {
     e.preventDefault();
-    const name = document.getElementById('taskInput').value;
-    const datetime = document.getElementById('taskTime').value;
-    const category = document.getElementById('taskCategory').value;
-    const recurring = document.getElementById('recurringTask').checked;
-    const message = document.getElementById('customMessage').value || `Reminder: ${name}`;
-
-    if (!name || !datetime) return;
-
-    tasks.push({
-        name,
-        date: datetime,
-        time: new Date(datetime).toLocaleTimeString(),
-        category,
-        recurring,
-        message
-    });
-
-    localStorage.setItem('tasks', JSON.stringify(tasks));
-    renderTasks();
-    this.reset();
+    const name = document.getElementById("taskName").value;
+    const time = document.getElementById("taskTime").value;
+    tasks.push({ name, time });
+    saveTasks();
+    displayTasks();
+    taskForm.reset();
 });
 
-// Search and filter
-document.getElementById('searchInput').addEventListener('input', function() {
-    const searchVal = this.value.toLowerCase();
-    const taskList = document.getElementById('taskList');
-    Array.from(taskList.children).forEach(li => {
-        const text = li.textContent.toLowerCase();
-        li.style.display = text.includes(searchVal) ? "" : "none";
-    });
-});
+// Show popup alert
+function showPopup(message) {
+    popup.innerText = message;
+    popup.style.display = "block";
+    alertSound.play();
+    setTimeout(() => {
+        popup.style.display = "none";
+    }, 5000);
+}
 
-document.getElementById('categoryFilter').addEventListener('change', function() {
-    const category = this.value;
-    const taskList = document.getElementById('taskList');
-    Array.from(taskList.children).forEach(li => {
-        li.style.display = li.textContent.includes(category) || category === "" ? "" : "none";
-    });
-});
-
-// Update category filter
-function updateCategoryFilter() {
-    const categorySet = new Set(tasks.map(t => t.category).filter(Boolean));
-    const categoryFilter = document.getElementById('categoryFilter');
-    categoryFilter.innerHTML = `<option value="">All Categories</option>`;
-    categorySet.forEach(cat => {
-        categoryFilter.innerHTML += `<option value="${cat}">${cat}</option>`;
+// Check tasks every second
+function checkTasks() {
+    const now = new Date();
+    const currentTime = now.toTimeString().slice(0, 5);
+    tasks.forEach(task => {
+        if (task.time === currentTime) {
+            showPopup(`🔔 Reminder: ${task.name}`);
+        }
     });
 }
 
-// Toggle features
-document.getElementById('toggleFeatures').addEventListener('click', function() {
-    const adv = document.getElementById('advancedFeatures');
-    adv.style.display = adv.style.display === "none" ? "block" : "none";
-    this.textContent = adv.style.display === "none" ? "Show Advanced Features" : "Hide Advanced Features";
-});
+// Update odometer display
+function updateOdometer(newDays) {
+    const newStr = String(newDays);
+    const oldStr = String(lastDays);
 
-renderTasks();
+    daysOdometer.innerHTML = ""; // clear
+
+    for (let i = 0; i < newStr.length; i++) {
+        const digit = document.createElement("div");
+        digit.className = "digit";
+        digit.textContent = newStr[i];
+
+        // Animate only if digit changed
+        if (oldStr[i] !== newStr[i]) {
+            digit.classList.add("flip");
+            setTimeout(() => digit.classList.remove("flip"), 300);
+        }
+
+        daysOdometer.appendChild(digit);
+    }
+
+    lastDays = newDays;
+}
+
+// Update clock, days lived, and age
+function updateClockAndAge() {
+    const now = new Date();
+    currentTimeDisplay.textContent = `🕒 ${now.toLocaleTimeString()}`;
+
+    // Age & Days lived
+    const birthDate = new Date(2005, 3, 5); // April is month index 3
+    const diffMs = now - birthDate;
+    const daysLived = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    let years = now.getFullYear() - birthDate.getFullYear();
+    let months = now.getMonth() - birthDate.getMonth();
+    let days = now.getDate() - birthDate.getDate();
+
+    if (days < 0) {
+        months--;
+        const prevMonth = new Date(now.getFullYear(), now.getMonth(), 0).getDate();
+        days += prevMonth;
+    }
+    if (months < 0) {
+        years--;
+        months += 12;
+    }
+
+    // Update odometer
+    updateOdometer(daysLived);
+
+    // Update age display
+    ageDisplay.innerHTML = `<strong>${years} years, ${months} months, ${days} days</strong>`;
+}
+
+// Run intervals
+setInterval(checkTasks, 1000);
+setInterval(updateClockAndAge, 1000);
+
+// Initial load
+displayTasks();
+updateClockAndAge();
