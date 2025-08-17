@@ -50,10 +50,20 @@ h1 {
   backdrop-filter: blur(10px);
 }
 
+.quote-panel {
+  font-size: 1.2rem;
+  color: #0ff;
+  text-shadow: 0 0 8px #0ff;
+  padding: 15px;
+  border-radius: 10px;
+  background: rgba(0, 229, 255, 0.1);
+  margin-bottom: 20px;
+}
+
 .task-panel {
-  max-height: 300px; /* Limit height to make scrolling necessary for long lists */
-  overflow-y: auto; /* Enable vertical scrolling for task list */
-  -webkit-overflow-scrolling: touch; /* Smooth scrolling on touch devices */
+  max-height: 300px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .digital {
@@ -174,7 +184,7 @@ button:hover {
 <div class="container">
   <h1>🛸 Do It Now</h1>
   <div id="successRateDisplay" class="digital" style="margin-bottom: 20px;"></div>
-
+  <div id="quoteDisplay" class="panel quote-panel"></div>
   <div class="panel time-panel">
     <div id="currentTime" class="digital"></div>
     <div id="earthTime">
@@ -216,13 +226,32 @@ const currentTimeDisplay = document.getElementById("currentTime");
 const daysOdometer = document.getElementById("daysOdometer");
 const ageDisplay = document.getElementById("ageDisplay");
 const successRateDisplay = document.getElementById("successRateDisplay");
+const quoteDisplay = document.getElementById("quoteDisplay");
+
+// Array of motivational quotes
+const quotes = [
+    "The future depends on what you do today. - Mahatma Gandhi",
+    "You are never too old to set another goal or to dream a new dream. - C.S. Lewis",
+    "Success is not final, failure is not fatal: It is the courage to continue that counts. - Winston Churchill",
+    "The only way to do great work is to love what you do. - Steve Jobs",
+    "Don't watch the clock; do what it does. Keep going. - Sam Levenson",
+    "Start where you are. Use what you have. Do what you can. - Arthur Ashe",
+    "The secret of getting ahead is getting started. - Mark Twain",
+    "You don’t have to be great to start, but you have to start to be great. - Zig Ziglar"
+];
+
+// Function to display a random quote
+function displayRandomQuote() {
+    const randomIndex = Math.floor(Math.random() * quotes.length);
+    quoteDisplay.textContent = quotes[randomIndex];
+}
 
 // Success rate system
 let completedTasks = parseInt(localStorage.getItem("completedTasks")) || 0;
 let totalTasks = parseInt(localStorage.getItem("totalTasks")) || 0;
 let lastResetDate = localStorage.getItem("lastResetDate") || new Date().toDateString();
 
-// ----- Default Daily Tasks -----
+// Default Daily Tasks
 const defaultTasks = [
     { name: "Morning Routine", time: "06:30", endTime: "07:00", done: false },
     { name: "Learning IT", time: "07:00", endTime: "08:30", done: false },
@@ -421,6 +450,12 @@ function updateClockAndAge() {
     updateOdometer(daysLived);
     ageDisplay.innerHTML = `<strong>${years} years, ${months} months, ${days} days</strong>`;
 }
+
+// Display a random quote on page load
+displayRandomQuote();
+
+// Update quote every 30 seconds
+setInterval(displayRandomQuote, 30000);
 
 setInterval(checkTasks, 1000);
 setInterval(updateClockAndAge, 1000);
